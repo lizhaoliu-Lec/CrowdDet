@@ -3,13 +3,16 @@ import sys
 
 import numpy as np
 
+
 def add_path(path):
     if path not in sys.path:
         sys.path.insert(0, path)
 
+
 root_dir = '../../'
 add_path(os.path.join(root_dir))
 add_path(os.path.join(root_dir, 'lib'))
+
 
 class Crowd_human:
     class_names = ['background', 'person']
@@ -18,6 +21,7 @@ class Crowd_human:
     image_folder = '/data/CrowdHuman/images'
     train_source = os.path.join('/data/CrowdHuman/annotation_train.odgt')
     eval_source = os.path.join('/data/CrowdHuman/annotation_val.odgt')
+
 
 class Config:
     output_dir = 'outputs'
@@ -45,7 +49,7 @@ class Config:
     # ----------train config---------- #
     backbone_freeze_at = 2
     rpn_channel = 256
-    
+
     train_batch_per_gpu = 2
     momentum = 0.9
     weight_decay = 1e-4
@@ -102,5 +106,5 @@ class Config:
     bbox_normalize_means = np.array([0, 0, 0, 0])
     bbox_normalize_stds = np.array([0.1, 0.1, 0.2, 0.2])
 
-config = Config()
 
+config = Config()

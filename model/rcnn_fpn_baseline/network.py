@@ -13,6 +13,7 @@ from det_oprs.fpn_roi_target import fpn_roi_target
 from det_oprs.loss_opr import softmax_loss, smooth_l1_loss
 from det_oprs.utils import get_padded_tensor
 
+
 class Network(nn.Module):
     def __init__(self):
         super().__init__()
@@ -23,7 +24,7 @@ class Network(nn.Module):
 
     def forward(self, image, im_info, gt_boxes=None):
         image = (image - torch.tensor(config.image_mean[None, :, None, None]).type_as(image)) / (
-                torch.tensor(config.image_std[None, :, None, None]).type_as(image))
+            torch.tensor(config.image_std[None, :, None, None]).type_as(image))
         image = get_padded_tensor(image, 64)
         if self.training:
             return self._forward_train(image, im_info, gt_boxes)
@@ -36,9 +37,9 @@ class Network(nn.Module):
         # fpn_fms stride: 64,32,16,8,4, p6->p2
         rpn_rois, loss_dict_rpn = self.RPN(fpn_fms, im_info, gt_boxes)
         rcnn_rois, rcnn_labels, rcnn_bbox_targets = fpn_roi_target(
-                rpn_rois, im_info, gt_boxes, top_k=1)
+            rpn_rois, im_info, gt_boxes, top_k=1)
         loss_dict_rcnn = self.RCNN(fpn_fms, rcnn_rois,
-                rcnn_labels, rcnn_bbox_targets)
+                                   rcnn_labels, rcnn_bbox_targets)
         loss_dict.update(loss_dict_rpn)
         loss_dict.update(loss_dict_rcnn)
         return loss_dict
@@ -49,11 +50,12 @@ class Network(nn.Module):
         pred_bbox = self.RCNN(fpn_fms, rpn_rois)
         return pred_bbox.cpu().detach()
 
+
 class RCNN(nn.Module):
     def __init__(self):
         super().__init__()
         # roi head
-        self.fc1 = nn.Linear(256*7*7, 1024)
+        self.fc1 = nn.Linear(256 * 7 * 7, 1024)
         self.fc2 = nn.Linear(1024, 1024)
 
         for l in [self.fc1, self.fc2]:
@@ -104,14 +106,15 @@ class RCNN(nn.Module):
             return loss_dict
         else:
             class_num = pred_cls.shape[-1] - 1
-            tag = torch.arange(class_num).type_as(pred_cls)+1
-            tag = tag.repeat(pred_cls.shape[0], 1).reshape(-1,1)
+            tag = torch.arange(class_num).type_as(pred_cls) + 1
+            tag = tag.repeat(pred_cls.shape[0], 1).reshape(-1, 1)
             pred_scores = F.softmax(pred_cls, dim=-1)[:, 1:].reshape(-1, 1)
             pred_delta = pred_delta[:, 4:].reshape(-1, 4)
             base_rois = rcnn_rois[:, 1:5].repeat(1, class_num).reshape(-1, 4)
             pred_bbox = restore_bbox(base_rois, pred_delta, True)
             pred_bbox = torch.cat([pred_bbox, pred_scores, tag], axis=1)
             return pred_bbox
+
 
 def restore_bbox(rois, deltas, unnormalize=True):
     if unnormalize:

@@ -13,6 +13,7 @@ from det_oprs.fpn_roi_target import fpn_roi_target
 from det_oprs.loss_opr import emd_loss_softmax
 from det_oprs.utils import get_padded_tensor
 
+
 class Network(nn.Module):
     def __init__(self):
         super().__init__()
@@ -24,7 +25,7 @@ class Network(nn.Module):
 
     def forward(self, image, im_info, gt_boxes=None):
         image = (image - torch.tensor(config.image_mean[None, :, None, None]).type_as(image)) / (
-                torch.tensor(config.image_std[None, :, None, None]).type_as(image))
+            torch.tensor(config.image_std[None, :, None, None]).type_as(image))
         image = get_padded_tensor(image, 64)
         if self.training:
             return self._forward_train(image, im_info, gt_boxes)
@@ -37,9 +38,9 @@ class Network(nn.Module):
         # fpn_fms stride: 64,32,16,8,4, p6->p2
         rpn_rois, loss_dict_rpn = self.RPN(fpn_fms, im_info, gt_boxes)
         rcnn_rois, rcnn_labels, rcnn_bbox_targets = fpn_roi_target(
-                rpn_rois, im_info, gt_boxes, top_k=2)
+            rpn_rois, im_info, gt_boxes, top_k=2)
         loss_dict_rcnn = self.RCNN(fpn_fms, rcnn_rois,
-                rcnn_labels, rcnn_bbox_targets)
+                                   rcnn_labels, rcnn_bbox_targets)
         loss_dict.update(loss_dict_rpn)
         loss_dict.update(loss_dict_rcnn)
         return loss_dict
@@ -50,11 +51,12 @@ class Network(nn.Module):
         pred_bbox = self.RCNN(fpn_fms, rpn_rois)
         return pred_bbox.cpu().detach()
 
+
 class RCNN(nn.Module):
     def __init__(self):
         super().__init__()
         # roi head
-        self.fc1 = nn.Linear(256*7*7, 1024)
+        self.fc1 = nn.Linear(256 * 7 * 7, 1024)
         self.fc2 = nn.Linear(1024, 1024)
         self.fc3 = nn.Linear(1044, 1024)
 
@@ -71,11 +73,11 @@ class RCNN(nn.Module):
         self.ref_pred_cls_1 = nn.Linear(1024, config.num_classes)
         self.ref_pred_delta_1 = nn.Linear(1024, config.num_classes * 4)
         for l in [self.emd_pred_cls_0, self.emd_pred_cls_1,
-                self.ref_pred_cls_0, self.ref_pred_cls_1]:
+                  self.ref_pred_cls_0, self.ref_pred_cls_1]:
             nn.init.normal_(l.weight, std=0.001)
             nn.init.constant_(l.bias, 0)
         for l in [self.emd_pred_delta_0, self.emd_pred_delta_1,
-                self.ref_pred_delta_0, self.ref_pred_delta_1]:
+                  self.ref_pred_delta_0, self.ref_pred_delta_1]:
             nn.init.normal_(l.weight, std=0.001)
             nn.init.constant_(l.bias, 0)
 
@@ -95,9 +97,9 @@ class RCNN(nn.Module):
         pred_emd_scores_1 = F.softmax(pred_emd_cls_1, dim=-1)
         # cons refine feature
         boxes_feature_0 = torch.cat((pred_emd_delta_0[:, 4:],
-            pred_emd_scores_0[:, 1][:, None]), dim=1).repeat(1, 4)
+                                     pred_emd_scores_0[:, 1][:, None]), dim=1).repeat(1, 4)
         boxes_feature_1 = torch.cat((pred_emd_delta_1[:, 4:],
-            pred_emd_scores_1[:, 1][:, None]), dim=1).repeat(1, 4)
+                                     pred_emd_scores_1[:, 1][:, None]), dim=1).repeat(1, 4)
         boxes_feature_0 = torch.cat((flatten_feature, boxes_feature_0), dim=1)
         boxes_feature_1 = torch.cat((flatten_feature, boxes_feature_1), dim=1)
         refine_feature_0 = F.relu_(self.fc3(boxes_feature_0))
@@ -109,21 +111,21 @@ class RCNN(nn.Module):
         pred_ref_delta_1 = self.ref_pred_delta_1(refine_feature_1)
         if self.training:
             loss0 = emd_loss_softmax(
-                        pred_emd_delta_0, pred_emd_cls_0,
-                        pred_emd_delta_1, pred_emd_cls_1,
-                        bbox_targets, labels)
+                pred_emd_delta_0, pred_emd_cls_0,
+                pred_emd_delta_1, pred_emd_cls_1,
+                bbox_targets, labels)
             loss1 = emd_loss_softmax(
-                        pred_emd_delta_1, pred_emd_cls_1,
-                        pred_emd_delta_0, pred_emd_cls_0,
-                        bbox_targets, labels)
+                pred_emd_delta_1, pred_emd_cls_1,
+                pred_emd_delta_0, pred_emd_cls_0,
+                bbox_targets, labels)
             loss2 = emd_loss_softmax(
-                        pred_ref_delta_0, pred_ref_cls_0,
-                        pred_ref_delta_1, pred_ref_cls_1,
-                        bbox_targets, labels)
+                pred_ref_delta_0, pred_ref_cls_0,
+                pred_ref_delta_1, pred_ref_cls_1,
+                bbox_targets, labels)
             loss3 = emd_loss_softmax(
-                        pred_ref_delta_1, pred_ref_cls_1,
-                        pred_ref_delta_0, pred_ref_cls_0,
-                        bbox_targets, labels)
+                pred_ref_delta_1, pred_ref_cls_1,
+                pred_ref_delta_0, pred_ref_cls_0,
+                bbox_targets, labels)
             loss_rcnn = torch.cat([loss0, loss1], axis=1)
             loss_ref = torch.cat([loss2, loss3], axis=1)
             # requires_grad = False
@@ -139,8 +141,8 @@ class RCNN(nn.Module):
             return loss_dict
         else:
             class_num = pred_ref_cls_0.shape[-1] - 1
-            tag = torch.arange(class_num).type_as(pred_ref_cls_0)+1
-            tag = tag.repeat(pred_ref_cls_0.shape[0], 1).reshape(-1,1)
+            tag = torch.arange(class_num).type_as(pred_ref_cls_0) + 1
+            tag = tag.repeat(pred_ref_cls_0.shape[0], 1).reshape(-1, 1)
             pred_scores_0 = F.softmax(pred_ref_cls_0, dim=-1)[:, 1:].reshape(-1, 1)
             pred_scores_1 = F.softmax(pred_ref_cls_1, dim=-1)[:, 1:].reshape(-1, 1)
             pred_delta_0 = pred_ref_delta_0[:, 4:].reshape(-1, 4)
@@ -152,6 +154,7 @@ class RCNN(nn.Module):
             pred_bbox_1 = torch.cat([pred_bbox_1, pred_scores_1, tag], axis=1)
             pred_bbox = torch.cat((pred_bbox_0, pred_bbox_1), axis=1)
             return pred_bbox
+
 
 def restore_bbox(rois, deltas, unnormalize=True):
     if unnormalize:

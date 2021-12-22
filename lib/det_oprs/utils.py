@@ -3,6 +3,7 @@ import pickle
 
 import torch
 
+
 def get_padded_tensor(tensor, multiple_number, pad_value=0):
     t_height, t_width = tensor.shape[-2], tensor.shape[-1]
     padded_height = (t_height + multiple_number - 1) // \
@@ -22,11 +23,13 @@ def get_padded_tensor(tensor, multiple_number, pad_value=0):
         raise Exception('Not supported tensor dim: {}'.format(ndim))
     return padded_tensor
 
+
 def _init_backbone(backbone, model_path, strict):
     state_dict = _load_c2_pickled_weights(model_path)
     state_dict = _rename_weights_for_resnet50(state_dict)
     backbone.load_state_dict(state_dict, strict=strict)
     del state_dict
+
 
 def _rename_basic_resnet_weights(layer_keys):
     layer_keys = [k.replace("_", ".") for k in layer_keys]
@@ -57,6 +60,7 @@ def _rename_basic_resnet_weights(layer_keys):
     layer_keys = [k.replace(".branch1_bn.", ".downsample.1.") for k in layer_keys]
     return layer_keys
 
+
 def _rename_weights_for_resnet50(weights):
     original_keys = sorted(weights.keys())
     layer_keys = sorted(weights.keys())
@@ -72,6 +76,7 @@ def _rename_weights_for_resnet50(weights):
         w = torch.from_numpy(v)
         new_weights[key_map[k]] = w
     return new_weights
+
 
 def _load_c2_pickled_weights(file_path):
     with open(file_path, "rb") as f:

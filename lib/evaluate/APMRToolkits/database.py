@@ -4,6 +4,8 @@ import numpy as np
 from .image import *
 
 PERSON_CLASSES = ['background', 'person']
+
+
 # DBBase
 class Database(object):
     def __init__(self, gtpath=None, dtpath=None, body_key=None, head_key=None, mode=0):
@@ -55,12 +57,13 @@ class Database(object):
         evaluate by Caltech-style log-average miss rate
         ref: str - "CALTECH_-2"/"CALTECH_-4"
         """
+
         # find greater_than
         def _find_gt(lst, target):
             for idx, item in enumerate(lst):
                 if item >= target:
                     return idx
-            return len(lst)-1
+            return len(lst) - 1
 
         assert ref == "CALTECH_-2" or ref == "CALTECH_-4", ref
         if ref == "CALTECH_-2":
@@ -74,7 +77,7 @@ class Database(object):
             self.compare()
 
         tp, fp = 0.0, 0.0
-        fppiX, fppiY = list(), list() 
+        fppiX, fppiY = list(), list()
         for i, item in enumerate(self.scorelist):
             if item[1] == 1:
                 tp += 1.0
@@ -102,18 +105,19 @@ class Database(object):
         """
         :meth: evaluate by average precision
         """
+
         # calculate general ap score
         def _calculate_map(recall, precision):
             assert len(recall) == len(precision)
             area = 0
             for i in range(1, len(recall)):
-                delta_h = (precision[i-1] + precision[i]) / 2
-                delta_w = recall[i] - recall[i-1]
+                delta_h = (precision[i - 1] + precision[i]) / 2
+                delta_w = recall[i] - recall[i - 1]
                 area += delta_w * delta_h
             return area
 
         tp, fp = 0.0, 0.0
-        rpX, rpY = list(), list() 
+        rpX, rpY = list(), list()
         total_det = len(self.scorelist)
         total_gt = self._gtNum - self._ignNum
         total_images = self._imageNum
@@ -135,8 +139,7 @@ class Database(object):
             fpn.append(fp)
             recalln.append(tp)
             thr.append(item[0][-1])
-            fppi.append(fp/total_images)
+            fppi.append(fp / total_images)
 
         AP = _calculate_map(rpX, rpY)
         return AP, (rpX, rpY, thr, fpn, recalln, fppi)
-

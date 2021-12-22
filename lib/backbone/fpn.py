@@ -4,18 +4,20 @@ import torch
 from torch import nn
 import torch.nn.functional as F
 
+
 class FPN(nn.Module):
     """
     This module implements Feature Pyramid Network.
     It creates pyramid features built on top of some input feature maps.
     """
+
     def __init__(self, bottom_up, layers_begin, layers_end):
         super(FPN, self).__init__()
         assert layers_begin > 1 and layers_begin < 6
         assert layers_end > 4 and layers_begin < 8
         in_channels = [256, 512, 1024, 2048]
         fpn_dim = 256
-        in_channels = in_channels[layers_begin-2:]
+        in_channels = in_channels[layers_begin - 2:]
 
         lateral_convs = nn.ModuleList()
         output_convs = nn.ModuleList()
@@ -49,18 +51,17 @@ class FPN(nn.Module):
         prev_features = self.lateral_convs[0](bottom_up_features[0])
         results.append(self.output_convs[0](prev_features))
         for l_id, (features, lateral_conv, output_conv) in enumerate(zip(
-            bottom_up_features[1:], self.lateral_convs[1:], self.output_convs[1:])):
+                bottom_up_features[1:], self.lateral_convs[1:], self.output_convs[1:])):
             top_down_features = F.interpolate(prev_features, scale_factor=2, mode="bilinear", align_corners=False)
             lateral_features = lateral_conv(features)
             prev_features = lateral_features + top_down_features
             results.append(output_conv(prev_features))
-        if(self.output_e == 6):
+        if (self.output_e == 6):
             p6 = F.max_pool2d(results[0], kernel_size=1, stride=2, padding=0)
             results.insert(0, p6)
-        elif(self.output_e == 7):
+        elif (self.output_e == 7):
             p6 = self.p6(results[0])
             results.insert(0, p6)
             p7 = self.p7(F.relu(results[0]))
             results.insert(0, p7)
         return results
-

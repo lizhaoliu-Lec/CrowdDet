@@ -3,6 +3,7 @@ import math
 import torch
 from torchvision.ops import roi_align
 
+
 def assign_boxes_to_levels(rois, min_level, max_level, canonical_box_size=224, canonical_level=4):
     """
         rois (Tensor): A tensor of shape (N, 5).
@@ -20,6 +21,7 @@ def assign_boxes_to_levels(rois, min_level, max_level, canonical_box_size=224, c
     level_assignments = torch.clamp(level_assignments, min=min_level, max=max_level)
     return level_assignments.to(torch.int64) - min_level
 
+
 def roi_pooler(fpn_fms, rois, stride, pool_shape, pooler_type):
     if pooler_type == "ROIAlign":
         pooler_aligned = False
@@ -34,11 +36,10 @@ def roi_pooler(fpn_fms, rois, stride, pool_shape, pooler_type):
     level_assignments = assign_boxes_to_levels(rois, min_level, max_level, 224, 4)
     dtype, device = fpn_fms[0].dtype, fpn_fms[0].device
     output = torch.zeros((len(rois), fpn_fms[0].shape[1], pool_shape[0], pool_shape[1]),
-            dtype=dtype, device=device)
+                         dtype=dtype, device=device)
     for level, (fm_level, scale_level) in enumerate(zip(fpn_fms, stride)):
         inds = torch.nonzero(level_assignments == level, as_tuple=False).squeeze(1)
         rois_level = rois[inds]
-        output[inds] = roi_align(fm_level, rois_level, pool_shape, spatial_scale=1.0/scale_level,
-                sampling_ratio=-1, aligned=pooler_aligned)
+        output[inds] = roi_align(fm_level, rois_level, pool_shape, spatial_scale=1.0 / scale_level,
+                                 sampling_ratio=-1, aligned=pooler_aligned)
     return output
-

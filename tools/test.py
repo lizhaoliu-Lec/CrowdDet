@@ -14,20 +14,21 @@ from data.CrowdHuman import CrowdHuman
 from utils import misc_utils, nms_utils
 from evaluate import compute_JI, compute_APMR
 
+
 def eval_all(args, config, network):
     # model_path
     saveDir = os.path.join('../model', args.model_dir, config.model_dir)
     evalDir = os.path.join('../model', args.model_dir, config.eval_dir)
     misc_utils.ensure_dir(evalDir)
-    model_file = os.path.join(saveDir, 
-            'dump-{}.pth'.format(args.resume_weights))
+    model_file = os.path.join(saveDir,
+                              'dump-{}.pth'.format(args.resume_weights))
     assert os.path.exists(model_file)
     # get devices
     str_devices = args.devices
     devices = misc_utils.device_parser(str_devices)
     # load data
     crowdhuman = CrowdHuman(config, if_train=False)
-    #crowdhuman.records = crowdhuman.records[:10]
+    # crowdhuman.records = crowdhuman.records[:10]
     # multiprocessing
     num_devs = len(devices)
     len_dataset = len(crowdhuman)
@@ -39,7 +40,7 @@ def eval_all(args, config, network):
         start = i * num_image
         end = min(start + num_image, len_dataset)
         proc = Process(target=inference, args=(
-                config, network, model_file, devices[i], crowdhuman, start, end, result_queue))
+            config, network, model_file, devices[i], crowdhuman, start, end, result_queue))
         proc.start()
         procs.append(proc)
     pbar = tqdm(total=len_dataset, ncols=50)
@@ -54,15 +55,16 @@ def eval_all(args, config, network):
     misc_utils.save_json_lines(all_results, fpath)
     # evaluation
     eval_path = os.path.join(evalDir, 'eval-{}.json'.format(args.resume_weights))
-    eval_fid = open(eval_path,'w')
+    eval_fid = open(eval_path, 'w')
     res_line, JI = compute_JI.evaluation_all(fpath, 'box')
     for line in res_line:
-        eval_fid.write(line+'\n')
+        eval_fid.write(line + '\n')
     AP, MR = compute_APMR.compute_APMR(fpath, config.eval_source, 'box')
     line = 'AP:{:.4f}, MR:{:.4f}, JI:{:.4f}.'.format(AP, MR, JI)
     print(line)
-    eval_fid.write(line+'\n')
+    eval_fid.write(line + '\n')
     eval_fid.close()
+
 
 def inference(config, network, model_file, device, dataset, start, end, result_queue):
     torch.set_default_tensor_type('torch.FloatTensor')
@@ -86,7 +88,7 @@ def inference(config, network, model_file, device, dataset, start, end, result_q
             top_k = pred_boxes.shape[-1] // 6
             n = pred_boxes.shape[0]
             pred_boxes = pred_boxes.reshape(-1, 6)
-            idents = np.tile(np.arange(n)[:,None], (1, top_k)).reshape(-1, 1)
+            idents = np.tile(np.arange(n)[:, None], (1, top_k)).reshape(-1, 1)
             pred_boxes = np.hstack((pred_boxes, idents))
             keep = pred_boxes[:, 4] > config.pred_cls_threshold
             pred_boxes = pred_boxes[keep]
@@ -106,7 +108,7 @@ def inference(config, network, model_file, device, dataset, start, end, result_q
             pred_boxes = pred_boxes[keep]
         else:
             raise ValueError('Unknown NMS method.')
-        #if pred_boxes.shape[0] > config.detection_per_image and \
+        # if pred_boxes.shape[0] > config.detection_per_image and \
         #    config.test_nms_method != 'none':
         #    order = np.argsort(-pred_boxes[:, 4])
         #    order = order[:config.detection_per_image]
@@ -117,25 +119,27 @@ def inference(config, network, model_file, device, dataset, start, end, result_q
         gt_boxes = gt_boxes[0].numpy()
         gt_boxes[:, 2:4] -= gt_boxes[:, :2]
         result_dict = dict(ID=ID[0], height=int(im_info[0, -3]), width=int(im_info[0, -2]),
-                dtboxes=boxes_dump(pred_boxes), gtboxes=boxes_dump(gt_boxes))
+                           dtboxes=boxes_dump(pred_boxes), gtboxes=boxes_dump(gt_boxes))
         result_queue.put_nowait(result_dict)
+
 
 def boxes_dump(boxes):
     if boxes.shape[-1] == 7:
-        result = [{'box':[round(i, 1) for i in box[:4]],
-                   'score':round(float(box[4]), 5),
-                   'tag':int(box[5]),
-                   'proposal_num':int(box[6])} for box in boxes]
+        result = [{'box': [round(i, 1) for i in box[:4]],
+                   'score': round(float(box[4]), 5),
+                   'tag': int(box[5]),
+                   'proposal_num': int(box[6])} for box in boxes]
     elif boxes.shape[-1] == 6:
-        result = [{'box':[round(i, 1) for i in box[:4].tolist()],
-                   'score':round(float(box[4]), 5),
-                   'tag':int(box[5])} for box in boxes]
+        result = [{'box': [round(i, 1) for i in box[:4].tolist()],
+                   'score': round(float(box[4]), 5),
+                   'tag': int(box[5])} for box in boxes]
     elif boxes.shape[-1] == 5:
-        result = [{'box':[round(i, 1) for i in box[:4]],
-                   'tag':int(box[4])} for box in boxes]
+        result = [{'box': [round(i, 1) for i in box[:4]],
+                   'tag': int(box[4])} for box in boxes]
     else:
         raise ValueError('Unknown box dim.')
     return result
+
 
 def run_test():
     parser = argparse.ArgumentParser()
@@ -151,6 +155,6 @@ def run_test():
     from network import Network
     eval_all(args, config, Network)
 
+
 if __name__ == '__main__':
     run_test()
-

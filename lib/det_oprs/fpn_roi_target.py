@@ -5,6 +5,7 @@ import numpy as np
 from config import config
 from det_oprs.bbox_opr import box_overlap_opr, bbox_transform_opr, box_overlap_ignore_opr
 
+
 @torch.no_grad()
 def fpn_roi_target(rpn_rois, im_info, gt_boxes, top_k=1):
     return_rois = []
@@ -18,7 +19,7 @@ def fpn_roi_target(rpn_rois, im_info, gt_boxes, top_k=1):
         batch_roi_inds = torch.nonzero(rpn_rois[:, 0] == bid, as_tuple=False).flatten()
         all_rois = torch.cat([rpn_rois[batch_roi_inds], gt_rois], axis=0)
         overlaps_normal, overlaps_ignore = box_overlap_ignore_opr(
-                all_rois[:, 1:5], gt_boxes_perimg)
+            all_rois[:, 1:5], gt_boxes_perimg)
         overlaps_normal, overlaps_normal_indices = overlaps_normal.sort(descending=True, dim=1)
         overlaps_ignore, overlaps_ignore_indices = overlaps_ignore.sort(descending=True, dim=1)
         # gt max and indices, ignore max and indices
@@ -30,9 +31,9 @@ def fpn_roi_target(rpn_rois, im_info, gt_boxes, top_k=1):
         ignore_assign_mask = (max_overlaps_normal < config.fg_threshold) * (
                 max_overlaps_ignore > max_overlaps_normal)
         max_overlaps = max_overlaps_normal * ~ignore_assign_mask + \
-                max_overlaps_ignore * ignore_assign_mask
+                       max_overlaps_ignore * ignore_assign_mask
         gt_assignment = gt_assignment_normal * ~ignore_assign_mask + \
-                gt_assignment_ignore * ignore_assign_mask
+                        gt_assignment_ignore * ignore_assign_mask
         labels = gt_boxes_perimg[gt_assignment, 4]
         fg_mask = (max_overlaps >= config.fg_threshold) * (labels != config.ignore_label)
         bg_mask = (max_overlaps < config.bg_threshold_high) * (
@@ -69,6 +70,7 @@ def fpn_roi_target(rpn_rois, im_info, gt_boxes, top_k=1):
         return_bbox_targets = torch.cat(return_bbox_targets, axis=0)
         return return_rois, return_labels, return_bbox_targets
 
+
 def subsample_masks(masks, num_samples, sample_value):
     positive = torch.nonzero(masks.eq(sample_value), as_tuple=False).squeeze(1)
     num_mask = len(positive)
@@ -79,4 +81,3 @@ def subsample_masks(masks, num_samples, sample_value):
     negative = positive[perm]
     masks[negative] = not sample_value
     return masks
-

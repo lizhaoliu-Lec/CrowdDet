@@ -2,12 +2,14 @@ import numpy as np
 import torch
 import torch.nn.functional as F
 
+
 class AnchorGenerator():
     """default anchor generator for fpn.
     This class generate anchors by feature map in level.
     """
+
     def __init__(self, base_size=16, ratios=[0.5, 1, 2],
-        base_scale=2):
+                 base_scale=2):
         self.base_size = base_size
         self.base_scale = np.array(base_scale)
         self.anchor_ratios = np.array(ratios)
@@ -39,9 +41,9 @@ class AnchorGenerator():
         hs = (hs[:, None] * anchor_scales).reshape(-1, 1)
         # make anchors
         anchors = np.hstack((x_ctr - 0.5 * (ws - 1),
-                         y_ctr - 0.5 * (hs - 1),
-                         x_ctr + 0.5 * (ws - 1),
-                         y_ctr + 0.5 * (hs - 1))) - off
+                             y_ctr - 0.5 * (hs - 1),
+                             x_ctr + 0.5 * (ws - 1),
+                             y_ctr + 0.5 * (hs - 1))) - off
         return anchors.astype(np.float32)
 
     def get_center_offsets(self, fm_map, stride):
@@ -49,14 +51,14 @@ class AnchorGenerator():
         f_device = fm_map.device
         shift_x = torch.arange(0, fm_width, device=f_device) * stride
         shift_y = torch.arange(0, fm_height, device=f_device) * stride
-        broad_shift_x = shift_x.reshape(-1, shift_x.shape[0]).repeat(fm_height,1)
-        broad_shift_y = shift_y.reshape(shift_y.shape[0], -1).repeat(1,fm_width)
-        flatten_shift_x = broad_shift_x.flatten().reshape(-1,1)
-        flatten_shift_y = broad_shift_y.flatten().reshape(-1,1)
+        broad_shift_x = shift_x.reshape(-1, shift_x.shape[0]).repeat(fm_height, 1)
+        broad_shift_y = shift_y.reshape(shift_y.shape[0], -1).repeat(1, fm_width)
+        flatten_shift_x = broad_shift_x.flatten().reshape(-1, 1)
+        flatten_shift_y = broad_shift_y.flatten().reshape(-1, 1)
         shifts = torch.cat(
             [flatten_shift_x, flatten_shift_y, flatten_shift_x, flatten_shift_y],
             axis=1)
-        return shifts 
+        return shifts
 
     def get_anchors_by_feature(self, fm_map, base_stride, off_stride):
         # shifts shape: [A, 4]
@@ -72,4 +74,3 @@ class AnchorGenerator():
     @torch.no_grad()
     def __call__(self, featmap, base_stride, off_stride):
         return self.get_anchors_by_feature(featmap, base_stride, off_stride)
-

@@ -6,9 +6,10 @@ from det_oprs.bbox_opr import bbox_transform_inv_opr, clip_boxes_opr, \
     filter_boxes_opr
 from torchvision.ops import nms
 
+
 @torch.no_grad()
 def find_top_rpn_proposals(is_train, rpn_bbox_offsets_list, rpn_cls_prob_list,
-        all_anchors_list, im_info):
+                           all_anchors_list, im_info):
     prev_nms_top_n = config.train_prev_nms_top_n \
         if is_train else config.test_prev_nms_top_n
     post_nms_top_n = config.train_post_nms_top_n \
@@ -40,7 +41,7 @@ def find_top_rpn_proposals(is_train, rpn_bbox_offsets_list, rpn_cls_prob_list,
             if config.anchor_within_border:
                 proposals = clip_boxes_opr(proposals, im_info[bid, :])
             probs = rpn_cls_prob_list[l][bid] \
-                    .permute(1,2,0).reshape(-1, 2)
+                .permute(1, 2, 0).reshape(-1, 2)
             probs = torch.softmax(probs, dim=-1)[:, 1]
             # gather the proposals and probs
             batch_proposals_list.append(proposals)
@@ -49,7 +50,7 @@ def find_top_rpn_proposals(is_train, rpn_bbox_offsets_list, rpn_cls_prob_list,
         batch_probs = torch.cat(batch_probs_list, dim=0)
         # filter the zero boxes.
         batch_keep_mask = filter_boxes_opr(
-                batch_proposals, box_min_size * im_info[bid, 2])
+            batch_proposals, box_min_size * im_info[bid, 2])
         batch_proposals = batch_proposals[batch_keep_mask]
         batch_probs = batch_probs[batch_keep_mask]
         # prev_nms_top_n
@@ -62,7 +63,7 @@ def find_top_rpn_proposals(is_train, rpn_bbox_offsets_list, rpn_cls_prob_list,
         keep = nms(batch_proposals, batch_probs, nms_threshold)
         keep = keep[:post_nms_top_n]
         batch_proposals = batch_proposals[keep]
-        #batch_probs = batch_probs[keep]
+        # batch_probs = batch_probs[keep]
         # cons the rois
         batch_inds = torch.ones(batch_proposals.shape[0], 1).type_as(batch_proposals) * bid
         batch_rois = torch.cat([batch_inds, batch_proposals], axis=1)

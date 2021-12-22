@@ -7,6 +7,8 @@ sys.path.insert(0, '../lib')
 from utils import misc_utils, visual_utils
 
 img_root = '/data/CrowdHuman/images/'
+
+
 def eval_all(args):
     # json file
     assert os.path.exists(args.json_file), "Wrong json path!"
@@ -14,7 +16,7 @@ def eval_all(args):
     records = misc_utils.load_json_lines(args.json_file)[:args.number]
     for record in records:
         dtboxes = misc_utils.load_bboxes(
-                record, key_name='dtboxes', key_box='box', key_score='score', key_tag='tag')
+            record, key_name='dtboxes', key_box='box', key_score='score', key_tag='tag')
         gtboxes = misc_utils.load_bboxes(record, 'gtboxes', 'box')
         dtboxes = misc_utils.xywh_to_xyxy(dtboxes)
         gtboxes = misc_utils.xywh_to_xyxy(gtboxes)
@@ -39,6 +41,7 @@ def run_eval():
     parser.add_argument('--visual_thresh', '-v', default=0.3, type=int)
     args = parser.parse_args()
     eval_all(args)
+
 
 if __name__ == '__main__':
     run_eval()

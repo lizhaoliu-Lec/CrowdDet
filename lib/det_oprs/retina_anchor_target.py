@@ -4,6 +4,7 @@ import numpy as np
 from config import config
 from det_oprs.bbox_opr import box_overlap_opr, bbox_transform_opr
 
+
 @torch.no_grad()
 def retina_anchor_target(anchors, gt_boxes, im_info, top_k=1):
     total_anchor = anchors.shape[0]
@@ -16,8 +17,8 @@ def retina_anchor_target(anchors, gt_boxes, im_info, top_k=1):
         overlaps = box_overlap_opr(anchors, gt_boxes_perimg[:, :-1])
         # gt max and indices
         max_overlaps, gt_assignment = overlaps.topk(top_k, dim=1, sorted=True)
-        max_overlaps= max_overlaps.flatten()
-        gt_assignment= gt_assignment.flatten()
+        max_overlaps = max_overlaps.flatten()
+        gt_assignment = gt_assignment.flatten()
         _, gt_assignment_for_gt = torch.max(overlaps, axis=0)
         del overlaps
         # cons labels
@@ -46,4 +47,3 @@ def retina_anchor_target(anchors, gt_boxes, im_info, top_k=1):
         return_labels = torch.cat(return_labels, axis=0)
         return_bbox_targets = torch.cat(return_bbox_targets, axis=0)
         return return_labels, return_bbox_targets
-

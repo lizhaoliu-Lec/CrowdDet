@@ -1,6 +1,7 @@
 import torch
 from torch import nn
 
+
 class FrozenBatchNorm2d(nn.Module):
     """
     BatchNorm2d where the batch statistics and the affine parameters are fixed.
@@ -23,4 +24,3 @@ class FrozenBatchNorm2d(nn.Module):
 
     def __repr__(self):
         return "FrozenBatchNorm2d(num_features={}, eps={})".format(self.num_features, self.eps)
-

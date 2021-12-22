@@ -1,6 +1,7 @@
 import torch
 from torch.optim.optimizer import Optimizer, required
 
+
 class SGD(Optimizer):
     """Implements stochastic gradient descent (optionally with momentum).
     Args:
@@ -65,4 +66,3 @@ class SGD(Optimizer):
                 p.add_(d_p, alpha=-group['lr'])
 
         return loss
-

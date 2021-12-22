@@ -2,13 +2,16 @@ import argparse
 from .APMRToolkits import *
 
 dbName = 'human'
+
+
 def compute_APMR(dt_path, gt_path, target_key=None, mode=0):
     database = Database(gt_path, dt_path, target_key, None, mode)
     database.compare()
-    mAP,_ = database.eval_AP()
-    mMR,_ = database.eval_MR()
+    mAP, _ = database.eval_AP()
+    mMR, _ = database.eval_MR()
     line = 'AP:{:.4f}, MR:{:.4f}.'.format(mAP, mMR)
     return mAP, mMR
+
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description='Analyze a json result file with iou match')

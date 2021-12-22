@@ -3,13 +3,16 @@ import sys
 
 import numpy as np
 
+
 def add_path(path):
     if path not in sys.path:
         sys.path.insert(0, path)
 
+
 root_dir = '../../'
 add_path(os.path.join(root_dir))
 add_path(os.path.join(root_dir, 'lib'))
+
 
 class Crowd_human:
     class_names = ['background', 'person']
@@ -18,6 +21,7 @@ class Crowd_human:
     image_folder = '/data/CrowdHuman/images'
     train_source = os.path.join('/data/CrowdHuman/annotation_train.odgt')
     eval_source = os.path.join('/data/CrowdHuman/annotation_val.odgt')
+
 
 class Config:
     output_dir = 'outputs'
@@ -69,8 +73,8 @@ class Config:
     max_boxes_of_image = 500
 
     # --------anchor generator config-------- #
-    anchor_base_size = 32 # the minimize anchor size in the bigest feature map.
-    anchor_base_scale = [2**0, 2**(1/3), 2**(2/3)]
+    anchor_base_size = 32  # the minimize anchor size in the bigest feature map.
+    anchor_base_scale = [2 ** 0, 2 ** (1 / 3), 2 ** (2 / 3)]
     anchor_aspect_ratios = [1, 2, 3]
     num_cell_anchors = len(anchor_aspect_ratios) * len(anchor_base_scale)
 
@@ -79,5 +83,6 @@ class Config:
     negative_thresh = 0.4
     positive_thresh = 0.5
     allow_low_quality = True
+
 
 config = Config()

@@ -1,12 +1,14 @@
 import math
 import torch
 
+
 def filter_boxes_opr(boxes, min_size):
     """Remove all boxes with any side smaller than min_size."""
     ws = boxes[:, 2] - boxes[:, 0] + 1
     hs = boxes[:, 3] - boxes[:, 1] + 1
     keep = (ws >= min_size) * (hs >= min_size)
     return keep
+
 
 def clip_boxes_opr(boxes, im_info):
     """ Clip the boxes into the image region."""
@@ -18,6 +20,7 @@ def clip_boxes_opr(boxes, im_info):
     boxes[:, 3::4] = boxes[:, 3::4].clamp(min=0, max=h)
     return boxes
 
+
 def batch_clip_proposals(proposals, im_info):
     """ Clip the boxes into the image region."""
     w = im_info[1] - 1
@@ -27,6 +30,7 @@ def batch_clip_proposals(proposals, im_info):
     boxes[:, 2::4] = boxes[:, 2::4].clamp(min=0, max=w)
     boxes[:, 3::4] = boxes[:, 3::4].clamp(min=0, max=h)
     return boxes
+
 
 def bbox_transform_inv_opr(bbox, deltas):
     max_delta = math.log(1000.0 / 16)
@@ -53,6 +57,7 @@ def bbox_transform_inv_opr(bbox, deltas):
                             pred_x2.reshape(-1, 1), pred_y2.reshape(-1, 1)), dim=1)
     return pred_boxes
 
+
 def bbox_transform_opr(bbox, gt):
     """ Transform the bounding box and ground truth to the loss targets.
     The 4 box coordinates are in axis 1"""
@@ -74,6 +79,7 @@ def bbox_transform_opr(bbox, gt):
                         target_dw.reshape(-1, 1), target_dh.reshape(-1, 1)), dim=1)
     return target
 
+
 def box_overlap_opr(box, gt):
     assert box.ndim == 2
     assert gt.ndim == 2
@@ -91,6 +97,7 @@ def box_overlap_opr(box, gt):
         torch.zeros(1, dtype=inter.dtype, device=inter.device),
     )
     return iou
+
 
 def box_overlap_ignore_opr(box, gt, ignore_label=-1):
     assert box.ndim == 2
@@ -116,4 +123,3 @@ def box_overlap_ignore_opr(box, gt, ignore_label=-1):
     iou *= ~gt_ignore_mask
     ioa *= gt_ignore_mask
     return iou, ioa
-

@@ -4,12 +4,13 @@ import torch.nn.functional as F
 
 from layers.batch_norm import FrozenBatchNorm2d
 
+
 class Bottleneck(nn.Module):
     def __init__(self, in_cha, neck_cha, out_cha, stride, has_bias=False):
         super(Bottleneck, self).__init__()
 
         self.downsample = None
-        if in_cha!= out_cha or stride != 1:
+        if in_cha != out_cha or stride != 1:
             self.downsample = nn.Sequential(
                 nn.Conv2d(in_cha, out_cha, kernel_size=1, stride=stride, bias=has_bias),
                 FrozenBatchNorm2d(out_cha),
@@ -60,13 +61,13 @@ class ResNet50(nn.Module):
         in_channels = 64
 
         self.layer1 = self._make_layer(block_counts[0], 64,
-            bottleneck_channels_list[0], out_channels_list[0], stride_list[0])
+                                       bottleneck_channels_list[0], out_channels_list[0], stride_list[0])
         self.layer2 = self._make_layer(block_counts[1], out_channels_list[0],
-            bottleneck_channels_list[1], out_channels_list[1], stride_list[1])
+                                       bottleneck_channels_list[1], out_channels_list[1], stride_list[1])
         self.layer3 = self._make_layer(block_counts[2], out_channels_list[1],
-            bottleneck_channels_list[2], out_channels_list[2], stride_list[2])
+                                       bottleneck_channels_list[2], out_channels_list[2], stride_list[2])
         self.layer4 = self._make_layer(block_counts[3], out_channels_list[2],
-            bottleneck_channels_list[3], out_channels_list[3], stride_list[3])
+                                       bottleneck_channels_list[3], out_channels_list[3], stride_list[3])
 
         for l in self.modules():
             if isinstance(l, nn.Conv2d):
@@ -113,4 +114,3 @@ class ResNet50(nn.Module):
         x = self.layer4(x)
         outputs.append(x)
         return outputs
-

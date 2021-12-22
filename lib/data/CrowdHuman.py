@@ -5,6 +5,7 @@ import numpy as np
 
 from utils import misc_utils
 
+
 class CrowdHuman(torch.utils.data.Dataset):
     def __init__(self, config, if_train):
         if if_train:
@@ -32,7 +33,7 @@ class CrowdHuman(torch.utils.data.Dataset):
         else:
             if_flap = False
         # image
-        image_path = os.path.join(self.config.image_folder, record['ID']+'.png')
+        image_path = os.path.join(self.config.image_folder, record['ID'] + '.png')
         image = misc_utils.load_img(image_path)
         image_h = image.shape[0]
         image_w = image.shape[1]
@@ -41,8 +42,8 @@ class CrowdHuman(torch.utils.data.Dataset):
         if self.training:
             # ground_truth
             gtboxes = misc_utils.load_gt(record, 'gtboxes', 'fbox', self.config.class_names)
-            keep = (gtboxes[:, 2]>=0) * (gtboxes[:, 3]>=0)
-            gtboxes=gtboxes[keep, :]
+            keep = (gtboxes[:, 2] >= 0) * (gtboxes[:, 3] >= 0)
+            gtboxes = gtboxes[keep, :]
             gtboxes[:, 2:4] += gtboxes[:, :2]
             if if_flap:
                 gtboxes = flip_boxes(gtboxes, image_w)
@@ -53,7 +54,7 @@ class CrowdHuman(torch.utils.data.Dataset):
         else:
             # image
             t_height, t_width, scale = target_size(
-                    image_h, image_w, self.short_size, self.max_size)
+                image_h, image_w, self.short_size, self.max_size)
             # INTER_CUBIC, INTER_LINEAR, INTER_NEAREST, INTER_AREA, INTER_LANCZOS4
             resized_image = cv2.resize(image, (t_width, t_height), interpolation=cv2.INTER_LINEAR)
             resized_image = resized_image.transpose(2, 0, 1)
@@ -74,12 +75,12 @@ class CrowdHuman(torch.utils.data.Dataset):
         batch_height = np.max(im_info[:, 3])
         batch_width = np.max(im_info[:, 4])
         padded_images = [pad_image(
-                im, batch_height, batch_width, self.config.image_mean) for im in images]
+            im, batch_height, batch_width, self.config.image_mean) for im in images]
         t_height, t_width, scale = target_size(
-                batch_height, batch_width, self.short_size, self.max_size)
+            batch_height, batch_width, self.short_size, self.max_size)
         # INTER_CUBIC, INTER_LINEAR, INTER_NEAREST, INTER_AREA, INTER_LANCZOS4
         resized_images = np.array([cv2.resize(
-                im, (t_width, t_height), interpolation=cv2.INTER_LINEAR) for im in padded_images])
+            im, (t_width, t_height), interpolation=cv2.INTER_LINEAR) for im in padded_images])
         resized_images = resized_images.transpose(0, 3, 1, 2)
         images = torch.tensor(resized_images).float()
         # ground_truth
@@ -101,6 +102,7 @@ class CrowdHuman(torch.utils.data.Dataset):
         else:
             return images, ground_truth, im_info
 
+
 def target_size(height, width, short_size, max_size):
     im_size_min = np.min([height, width])
     im_size_max = np.max([height, width])
@@ -111,12 +113,14 @@ def target_size(height, width, short_size, max_size):
         round(width * scale))
     return t_height, t_width, scale
 
+
 def flip_boxes(boxes, im_w):
     flip_boxes = boxes.copy()
     for i in range(flip_boxes.shape[0]):
         flip_boxes[i, 0] = im_w - boxes[i, 2] - 1
         flip_boxes[i, 2] = im_w - boxes[i, 0] - 1
     return flip_boxes
+
 
 def pad_image(img, height, width, mean_value):
     o_h, o_w, _ = img.shape

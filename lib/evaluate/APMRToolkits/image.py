@@ -1,5 +1,6 @@
 import numpy as np
 
+
 class Image(object):
     def __init__(self, mode):
         self.ID = None
@@ -33,7 +34,7 @@ class Image(object):
                 self.gtboxes = head_bbox
                 self._ignNum = (head_bbox[:, -1] == -1).sum()
             elif self.eval_mode == 2:
-                gt_tag = np.array([body_bbox[i,-1]!=-1 and head_bbox[i,-1]!=-1 for i in range(len(body_bbox))])
+                gt_tag = np.array([body_bbox[i, -1] != -1 and head_bbox[i, -1] != -1 for i in range(len(body_bbox))])
                 self._ignNum = (gt_tag == 0).sum()
                 self.gtboxes = np.hstack((body_bbox[:, :-1], head_bbox[:, :-1], gt_tag.reshape(-1, 1)))
             else:
@@ -119,9 +120,9 @@ class Image(object):
 
         dtboxes = np.array(sorted(dtboxes, key=lambda x: x[-1], reverse=True))
         gtboxes = np.array(sorted(gtboxes, key=lambda x: x[-1], reverse=True))
-        dt_body_boxes = np.hstack((dtboxes[:, :4], dtboxes[:, -1][:,None]))
+        dt_body_boxes = np.hstack((dtboxes[:, :4], dtboxes[:, -1][:, None]))
         dt_head_boxes = dtboxes[:, 4:8]
-        gt_body_boxes = np.hstack((gtboxes[:, :4], gtboxes[:, -1][:,None]))
+        gt_body_boxes = np.hstack((gtboxes[:, :4], gtboxes[:, -1][:, None]))
         gt_head_boxes = gtboxes[:, 4:8]
         overlap_iou = self.box_overlap_opr(dt_body_boxes, gt_body_boxes, True)
         overlap_head = self.box_overlap_opr(dt_head_boxes, gt_head_boxes, True)
@@ -160,20 +161,20 @@ class Image(object):
                 scorelist.append((dt, 0, self.ID))
         return scorelist
 
-    def box_overlap_opr(self, dboxes:np.ndarray, gboxes:np.ndarray, if_iou):
+    def box_overlap_opr(self, dboxes: np.ndarray, gboxes: np.ndarray, if_iou):
         eps = 1e-6
         assert dboxes.shape[-1] >= 4 and gboxes.shape[-1] >= 4
         N, K = dboxes.shape[0], gboxes.shape[0]
-        dtboxes = np.tile(np.expand_dims(dboxes, axis = 1), (1, K, 1))
-        gtboxes = np.tile(np.expand_dims(gboxes, axis = 0), (N, 1, 1))
+        dtboxes = np.tile(np.expand_dims(dboxes, axis=1), (1, K, 1))
+        gtboxes = np.tile(np.expand_dims(gboxes, axis=0), (N, 1, 1))
 
-        iw = np.minimum(dtboxes[:,:,2], gtboxes[:,:,2]) - np.maximum(dtboxes[:,:,0], gtboxes[:,:,0])
-        ih = np.minimum(dtboxes[:,:,3], gtboxes[:,:,3]) - np.maximum(dtboxes[:,:,1], gtboxes[:,:,1])
+        iw = np.minimum(dtboxes[:, :, 2], gtboxes[:, :, 2]) - np.maximum(dtboxes[:, :, 0], gtboxes[:, :, 0])
+        ih = np.minimum(dtboxes[:, :, 3], gtboxes[:, :, 3]) - np.maximum(dtboxes[:, :, 1], gtboxes[:, :, 1])
         inter = np.maximum(0, iw) * np.maximum(0, ih)
 
-        dtarea = (dtboxes[:,:,2] - dtboxes[:,:,0]) * (dtboxes[:,:,3] - dtboxes[:,:,1])
+        dtarea = (dtboxes[:, :, 2] - dtboxes[:, :, 0]) * (dtboxes[:, :, 3] - dtboxes[:, :, 1])
         if if_iou:
-            gtarea = (gtboxes[:,:,2] - gtboxes[:,:,0]) * (gtboxes[:,:,3] - gtboxes[:,:,1]) 
+            gtarea = (gtboxes[:, :, 2] - gtboxes[:, :, 0]) * (gtboxes[:, :, 3] - gtboxes[:, :, 1])
             ious = inter / (dtarea + gtarea - inter + eps)
         else:
             ious = inter / (dtarea + eps)
@@ -181,16 +182,16 @@ class Image(object):
 
     def clip_all_boader(self):
 
-        def _clip_boundary(boxes,height,width):
-            assert boxes.shape[-1]>=4
-            boxes[:,0] = np.minimum(np.maximum(boxes[:,0],0), width - 1)
-            boxes[:,1] = np.minimum(np.maximum(boxes[:,1],0), height - 1)
-            boxes[:,2] = np.maximum(np.minimum(boxes[:,2],width), 0)
-            boxes[:,3] = np.maximum(np.minimum(boxes[:,3],height), 0)
+        def _clip_boundary(boxes, height, width):
+            assert boxes.shape[-1] >= 4
+            boxes[:, 0] = np.minimum(np.maximum(boxes[:, 0], 0), width - 1)
+            boxes[:, 1] = np.minimum(np.maximum(boxes[:, 1], 0), height - 1)
+            boxes[:, 2] = np.maximum(np.minimum(boxes[:, 2], width), 0)
+            boxes[:, 3] = np.maximum(np.minimum(boxes[:, 3], height), 0)
             return boxes
 
-        assert self.dtboxes.shape[-1]>=4
-        assert self.gtboxes.shape[-1]>=4
+        assert self.dtboxes.shape[-1] >= 4
+        assert self.gtboxes.shape[-1] >= 4
         assert self._width is not None and self._height is not None
         if self.eval_mode == 2:
             self.dtboxes[:, :4] = _clip_boundary(self.dtboxes[:, :4], self._height, self._width)
@@ -243,7 +244,8 @@ class Image(object):
                 assert key_tag in dict_input[key_name][0]
         if key_score:
             if key_tag:
-                bboxes = np.vstack([np.hstack((rb[key_box], rb[key_score], rb[key_tag])) for rb in dict_input[key_name]])
+                bboxes = np.vstack(
+                    [np.hstack((rb[key_box], rb[key_score], rb[key_tag])) for rb in dict_input[key_name]])
             else:
                 bboxes = np.vstack([np.hstack((rb[key_box], rb[key_score])) for rb in dict_input[key_name]])
         else:
